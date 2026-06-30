@@ -133,4 +133,32 @@ impl Automaton for Life {
         self.generation = 0;
         self.population = 0;
     }
+
+    fn load_cells(&mut self, cells: &[(i32, i32)]) {
+        if cells.is_empty() { return; }
+
+        let shape = self.grid.cells.shape().to_vec();
+        let w = shape[0] as i32;
+        let h = if shape.len() > 1 { shape[1] as i32 } else { 1 };
+
+        let min_x = cells.iter().map(|(x, _)| *x).min().unwrap();
+        let max_x = cells.iter().map(|(x, _)| *x).max().unwrap();
+        let min_y = cells.iter().map(|(_, y)| *y).min().unwrap();
+        let max_y = cells.iter().map(|(_, y)| *y).max().unwrap();
+
+        let ox = (w - (max_x - min_x + 1)) / 2 - min_x;
+        let oy = (h - (max_y - min_y + 1)) / 2 - min_y;
+
+        self.grid.cells.fill(0);
+        for (px, py) in cells {
+            let gx = px + ox;
+            let gy = py + oy;
+            if gx >= 0 && gx < w && gy >= 0 && gy < h {
+                self.grid.cells[ndarray::IxDyn(&[gx as usize, gy as usize])] = 1;
+            }
+        }
+
+        self.generation = 0;
+        self.population = self.grid.cells.iter().map(|&c| c as u64).sum();
+    }
 }

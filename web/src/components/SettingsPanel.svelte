@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher } from 'svelte'
+  import { PATTERNS } from '../lib/patterns.js'
 
   export let speed        = 1
   export let birthStr     = '3'
@@ -9,6 +10,7 @@
 
   const dispatch = createEventDispatcher()
   let tab = 'rule'
+  let customRle = ''
 
   function applyRule() {
     const parse = s => [...s].map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 9)
@@ -16,12 +18,17 @@
   }
 
   function onKey(e) { if (e.key === 'Enter') applyRule() }
+
+  function loadPattern(rle) {
+    dispatch('loadpattern', rle)
+  }
 </script>
 
 <aside class="panel">
   <nav class="tabs">
-    <button class:active={tab === 'rule'} on:click={() => tab = 'rule'}>Rule</button>
-    <button class:active={tab === 'view'} on:click={() => tab = 'view'}>View</button>
+    <button class:active={tab === 'rule'}     on:click={() => tab = 'rule'}>Rule</button>
+    <button class:active={tab === 'patterns'} on:click={() => tab = 'patterns'}>Patterns</button>
+    <button class:active={tab === 'view'}     on:click={() => tab = 'view'}>View</button>
   </nav>
 
   {#if tab === 'rule'}
@@ -77,6 +84,35 @@
     </div>
   {/if}
 
+  {#if tab === 'patterns'}
+    <div class="pattern-list">
+      {#each PATTERNS as group}
+        <div class="group-label">{group.group}</div>
+        {#each group.items as pattern}
+          <button class="pattern-item" on:click={() => loadPattern(pattern.rle)}>
+            <span class="pattern-name">{pattern.name}</span>
+            <span class="pattern-meta">{pattern.meta}</span>
+          </button>
+        {/each}
+      {/each}
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="section">
+      <div class="rle-label">Custom RLE</div>
+      <textarea
+        bind:value={customRle}
+        placeholder="Paste RLE here…"
+        rows="3"
+        spellcheck="false"
+      ></textarea>
+      <button class="full" on:click={() => customRle.trim() && loadPattern(customRle.trim())}>
+        Load
+      </button>
+    </div>
+  {/if}
+
   {#if tab === 'view'}
     <div class="section">
       <div class="row">
@@ -113,28 +149,34 @@
     position: absolute;
     top: 12px;
     right: 12px;
-    width: 220px;
+    width: 230px;
     background: #111;
     border: 1px solid #1e1e1e;
     border-radius: 8px;
     z-index: 10;
     overflow: hidden;
+    max-height: calc(100% - 24px);
+    overflow-y: auto;
   }
 
   .tabs {
     display: flex;
     border-bottom: 1px solid #1e1e1e;
+    position: sticky;
+    top: 0;
+    background: #111;
+    z-index: 1;
   }
   .tabs button {
     flex: 1;
-    padding: 9px;
+    padding: 9px 4px;
     background: none;
     border: none;
     border-bottom: 1px solid transparent;
     margin-bottom: -1px;
     color: #3a3a3a;
     font-family: inherit;
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     cursor: pointer;
@@ -202,8 +244,6 @@
     width: 100%;
   }
   button.full:hover { color: #aaa; border-color: #333; }
-
-  /* Apply rule button gets full width in its section */
   .section > button.full { margin-top: 10px; }
 
   .dim { opacity: 0.35; pointer-events: none; }
@@ -214,4 +254,66 @@
     color: #444;
     margin-bottom: 10px;
   }
+
+  /* Patterns tab */
+  .pattern-list { padding: 8px 0; }
+
+  .group-label {
+    padding: 8px 14px 4px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #333;
+  }
+
+  .pattern-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 6px 14px;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 0;
+    gap: 2px;
+  }
+  .pattern-item:hover { background: #161616; }
+
+  .pattern-name {
+    color: #777;
+    font-size: 12px;
+    font-family: inherit;
+  }
+  .pattern-item:hover .pattern-name { color: #bbb; }
+
+  .pattern-meta {
+    color: #333;
+    font-size: 10px;
+    font-family: inherit;
+  }
+
+  .rle-label {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #3a3a3a;
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    width: 100%;
+    background: #0d0d0d;
+    border: 1px solid #1e1e1e;
+    border-radius: 4px;
+    color: #777;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 6px 8px;
+    resize: vertical;
+    line-height: 1.4;
+  }
+  textarea:focus { outline: none; border-color: #383838; }
+  textarea::placeholder { color: #2a2a2a; }
 </style>

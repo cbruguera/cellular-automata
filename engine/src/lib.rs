@@ -4,6 +4,7 @@ use serde::Deserialize;
 mod grid;
 mod neighborhood;
 mod automata;
+mod rle;
 
 use automata::{life::{Life, LifeConfig}, Automaton};
 
@@ -33,6 +34,13 @@ impl Simulation {
         let pixel_buf = vec![0u8; shape[0] * shape.get(1).copied().unwrap_or(1) * 4];
 
         Ok(Simulation { inner: automaton, pixel_buf })
+    }
+
+    pub fn load_rle(&mut self, rle: &str) -> Result<(), JsValue> {
+        let cells = rle::parse(rle)
+            .map_err(|e| JsValue::from_str(&e))?;
+        self.inner.load_cells(&cells);
+        Ok(())
     }
 
     pub fn step(&mut self) { self.inner.step(); }

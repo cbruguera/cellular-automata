@@ -121,6 +121,15 @@
     recreateSim()
   }
 
+  function handleLoadPattern(e) {
+    try {
+      running = false
+      sim.load_rle(e.detail)
+    } catch (err) {
+      error = err?.message ?? String(err)
+    }
+  }
+
   function handleKeydown(e) {
     if (e.key === ' ')          { e.preventDefault(); togglePlay() }
     if (e.key === 'ArrowRight') { e.preventDefault(); step() }
@@ -163,6 +172,7 @@
           on:speedchange={e => speed = e.detail}
           on:randomize={() => sim?.randomize()}
           on:clear={() => sim?.clear()}
+          on:loadpattern={handleLoadPattern}
         />
       {/key}
     {/if}

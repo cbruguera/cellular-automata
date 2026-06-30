@@ -8,4 +8,5 @@ pub trait Automaton {
     fn render_rgba(&self, buf: &mut [u8]);
     fn randomize(&mut self);
     fn clear(&mut self);
+    fn load_cells(&mut self, cells: &[(i32, i32)]);
 }
