@@ -35,7 +35,7 @@
 
 <div class="ca-dropdown" on:click|stopPropagation>
   <button class="trigger" on:click={() => open = !open}>
-    {label}<span class="caret">▾</span>
+    Menu<span class="caret">▾</span>
   </button>
 
   {#if open}
