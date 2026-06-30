@@ -220,6 +220,7 @@
     flex: 1;
     position: relative;
     overflow: hidden;
+    padding: 48px;
   }
 
   canvas {
