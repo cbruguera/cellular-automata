@@ -6,6 +6,7 @@ target/
 
 # wasm-pack output
 engine/pkg/
+web/src/engine/pkg/
 
 # Node
 web/node_modules/

@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte'
-  import init, { Simulation } from '../../engine/pkg/ca_engine.js'
+  import init, { Simulation } from './engine/pkg/ca_engine.js'
 
   let canvas
   let ctx
@@ -14,17 +14,24 @@
   let lastFrameTime = 0
   let speed = 1
   let showPanel = false
+  let loaded = false
+  let error = null
 
   onMount(async () => {
-    const wasmModule = await init()
-    wasmMemory = wasmModule.memory
-    sim = Simulation.create(JSON.stringify({
-      kind: 'life',
-      shape: [200, 150],
-    }))
-    ctx = canvas.getContext('2d')
-    resizeCanvas()
-    drawFrame()
+    try {
+      const wasmModule = await init()
+      wasmMemory = wasmModule.memory
+      sim = Simulation.create(JSON.stringify({
+        kind: 'life',
+        shape: [200, 150],
+      }))
+      ctx = canvas.getContext('2d')
+      loaded = true
+      resizeCanvas()
+      drawFrame()
+    } catch (e) {
+      error = e?.message ?? String(e)
+    }
   })
 
   onDestroy(() => {
@@ -38,6 +45,7 @@
 
   function drawFrame() {
     if (!sim) return
+    try {
 
     if (running) {
       for (let i = 0; i < speed; i++) sim.step()
@@ -52,7 +60,7 @@
     const raw = new Uint8ClampedArray(wasmMemory.buffer, ptr, len)
     const imageData = new ImageData(raw, w, h)
 
-    const offscreen = new OffscreenCanvas(GRID_W, GRID_H)
+    const offscreen = new OffscreenCanvas(w, h)
     const offCtx = offscreen.getContext('2d')
     offCtx.putImageData(imageData, 0, 0)
 
@@ -67,7 +75,10 @@
     if (lastFrameTime) fps = Math.round(1000 / (now - lastFrameTime))
     lastFrameTime = now
 
-    animFrameId = requestAnimationFrame(drawFrame)
+      animFrameId = requestAnimationFrame(drawFrame)
+    } catch (e) {
+      error = e?.message ?? String(e)
+    }
   }
 
   function togglePlay() {
@@ -103,13 +114,13 @@
   <header class="toolbar">
     <span class="ca-label">Game of Life</span>
     <div class="controls">
-      <button on:click={step} title="Step (→)">⏭</button>
-      <button on:click={togglePlay} class:active={running} title="Play/Pause (Space)">
+      <button on:click={step} disabled={!loaded} title="Step (→)">⏭</button>
+      <button on:click={togglePlay} disabled={!loaded} class:active={running} title="Play/Pause (Space)">
         {running ? '⏸' : '⏵'}
       </button>
-      <button on:click={reset} title="Randomize (R)">↺</button>
+      <button on:click={reset} disabled={!loaded} title="Randomize (R)">↺</button>
     </div>
-    <button class="gear" class:active={showPanel} on:click={() => showPanel = !showPanel} title="Settings">⚙</button>
+    <button class="gear" disabled={!loaded} class:active={showPanel} on:click={() => showPanel = !showPanel} title="Settings">⚙</button>
   </header>
 
   <main>
@@ -128,6 +139,13 @@
       </aside>
     {/if}
   </main>
+
+  {#if error}
+    <div class="error-bar">
+      <span>{error}</span>
+      <button on:click={() => error = null}>✕</button>
+    </div>
+  {/if}
 
   <footer class="status">
     <span>gen {generation.toLocaleString()}</span>
@@ -278,4 +296,22 @@
   }
 
   .dot { color: #2a2a2a; }
+
+  .error-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: #1a0a0a;
+    border-top: 1px solid #4a1a1a;
+    color: #e06060;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .error-bar button {
+    color: #e06060;
+    font-size: 12px;
+    padding: 2px 6px;
+  }
 </style>
