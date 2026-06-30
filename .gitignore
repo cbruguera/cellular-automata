@@ -1,0 +1,18 @@
+# CLAUDE.md is intentionally excluded from version control
+CLAUDE.md
+
+# Rust build artifacts
+target/
+
+# wasm-pack output
+engine/pkg/
+
+# Node
+web/node_modules/
+web/dist/
+web/.svelte-kit/
+
+# Editor
+.vscode/
+.idea/
+*.swp
