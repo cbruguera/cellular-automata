@@ -7,10 +7,14 @@
   export let survivalStr  = '23'
   export let boundary     = 'toroidal'
   export let neighborhood = 'moore'
+  export let gridW        = 200
+  export let gridH        = 150
 
   const dispatch = createEventDispatcher()
   let tab = 'rule'
   let customRle = ''
+  let inputW = gridW
+  let inputH = gridH
 
   function applyRule() {
     const parse = s => [...s].map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 9)
@@ -81,6 +85,23 @@
     <div class="section actions">
       <button class="full" on:click={() => dispatch('randomize')}>Randomize</button>
       <button class="full" on:click={() => dispatch('clear')}>Clear</button>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="section">
+      <div class="dim-label">Grid size</div>
+      <div class="row">
+        <label for="grid-w">W</label>
+        <input id="grid-w" type="number" min="10" max="2000" bind:value={inputW} />
+      </div>
+      <div class="row">
+        <label for="grid-h">H</label>
+        <input id="grid-h" type="number" min="10" max="2000" bind:value={inputH} />
+      </div>
+      <button class="full" on:click={() => dispatch('gridsizechange', { width: +inputW, height: +inputH })}>
+        Apply
+      </button>
     </div>
   {/if}
 
@@ -211,6 +232,19 @@
     text-align: center;
   }
   input[type=text]:focus { outline: none; border-color: #383838; }
+
+  input[type=number] {
+    width: 70px;
+    background: #0d0d0d;
+    border: 1px solid #1e1e1e;
+    border-radius: 4px;
+    color: #bbb;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 3px 7px;
+    text-align: center;
+  }
+  input[type=number]:focus { outline: none; border-color: #383838; }
 
   select {
     background: #0d0d0d;

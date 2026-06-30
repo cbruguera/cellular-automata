@@ -14,12 +14,22 @@
   let loaded     = false
   let error      = null
 
-  let caType      = 'life'
-  let ruleB       = [3]
-  let ruleS       = [2, 3]
-  let boundary    = 'toroidal'
+  let caType       = 'life'
+  let ruleB        = [3]
+  let ruleS        = [2, 3]
+  let boundary     = 'toroidal'
   let neighborhood = 'moore'
-  let speed       = 1
+  let speed        = 1
+  let gridW        = 300
+  let gridH        = 200
+
+  // zoom / pan
+  let zoom     = 1
+  let panX     = 0
+  let panY     = 0
+  let dragging = false
+  let dragAnchorX = 0
+  let dragAnchorY = 0
 
   // shown in status bar for 3D+ CAs only
   let showSliceNav = false
@@ -29,11 +39,20 @@
   function buildConfig() {
     return {
       kind: caType,
-      shape: [200, 150],
+      shape: [gridW, gridH],
       rule: { birth: ruleB, survival: ruleS },
       boundary,
       neighborhood: { kind: neighborhood, radius: 1 },
     }
+  }
+
+  function fitToCanvas() {
+    if (!sim || !canvas) return
+    const gw = sim.width()
+    const gh = sim.height()
+    zoom = Math.min(canvas.width / gw, canvas.height / gh)
+    panX = (canvas.width  - gw * zoom) / 2
+    panY = (canvas.height - gh * zoom) / 2
   }
 
   function recreateSim() {
@@ -51,20 +70,26 @@
       wasmMemory = wasmModule.memory
       sim = Simulation.create(JSON.stringify(buildConfig()))
       ctx = canvas.getContext('2d')
+      canvas.addEventListener('wheel', handleWheel, { passive: false })
       loaded = true
       resizeCanvas()
+      fitToCanvas()
       drawFrame()
     } catch (e) {
       error = e?.message ?? String(e)
     }
   })
 
-  onDestroy(() => { if (animFrameId) cancelAnimationFrame(animFrameId) })
+  onDestroy(() => {
+    if (animFrameId) cancelAnimationFrame(animFrameId)
+    canvas?.removeEventListener('wheel', handleWheel)
+  })
 
   function resizeCanvas() {
     if (!canvas) return
     canvas.width  = canvas.clientWidth
     canvas.height = canvas.clientHeight
+    fitToCanvas()
   }
 
   function drawFrame() {
@@ -83,8 +108,12 @@
       const offCtx     = offscreen.getContext('2d')
       offCtx.putImageData(imageData, 0, 0)
       ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.save()
+      ctx.translate(panX, panY)
+      ctx.scale(zoom, zoom)
       ctx.imageSmoothingEnabled = false
-      ctx.drawImage(offscreen, 0, 0, canvas.width, canvas.height)
+      ctx.drawImage(offscreen, 0, 0, w, h)
+      ctx.restore()
 
       generation = Number(sim.generation())
       population = sim.population()
@@ -121,6 +150,41 @@
     recreateSim()
   }
 
+  function handleWheel(e) {
+    e.preventDefault()
+    const rect = canvas.getBoundingClientRect()
+    const mx   = e.clientX - rect.left
+    const my   = e.clientY - rect.top
+    const factor  = e.deltaY < 0 ? 1.12 : 1 / 1.12
+    const newZoom = Math.max(0.2, Math.min(zoom * factor, 100))
+    panX = mx - (mx - panX) * (newZoom / zoom)
+    panY = my - (my - panY) * (newZoom / zoom)
+    zoom = newZoom
+  }
+
+  function handleMouseDown(e) {
+    if (e.button !== 0) return
+    dragging = true
+    dragAnchorX = e.clientX - panX
+    dragAnchorY = e.clientY - panY
+  }
+
+  function handleMouseMove(e) {
+    if (!dragging) return
+    panX = e.clientX - dragAnchorX
+    panY = e.clientY - dragAnchorY
+  }
+
+  function handleMouseUp()    { dragging = false }
+  function handleMouseLeave() { dragging = false }
+
+  function handleGridSizeChange(e) {
+    gridW = e.detail.width
+    gridH = e.detail.height
+    recreateSim()
+    fitToCanvas()
+  }
+
   function handleLoadPattern(e) {
     try {
       running = false
@@ -134,6 +198,7 @@
     if (e.key === ' ')          { e.preventDefault(); togglePlay() }
     if (e.key === 'ArrowRight') { e.preventDefault(); step() }
     if (e.key === 'r')          { sim?.randomize() }
+    if (e.key === 'f')          { fitToCanvas() }
     if (e.key === 'Escape')     { showPanel = false }
   }
 </script>
@@ -156,7 +221,14 @@
   </header>
 
   <main>
-    <canvas bind:this={canvas}></canvas>
+    <canvas
+      bind:this={canvas}
+      style="cursor: {dragging ? 'grabbing' : 'grab'}"
+      on:mousedown={handleMouseDown}
+      on:mousemove={handleMouseMove}
+      on:mouseup={handleMouseUp}
+      on:mouseleave={handleMouseLeave}
+    ></canvas>
 
     {#if showPanel}
       {#key caType}
@@ -166,6 +238,8 @@
           survivalStr={ruleS.join('')}
           {boundary}
           {neighborhood}
+          {gridW}
+          {gridH}
           on:rulechange={handleRuleChange}
           on:boundarychange={handleBoundaryChange}
           on:neighborhoodchange={handleNeighborhoodChange}
@@ -173,6 +247,7 @@
           on:randomize={() => sim?.randomize()}
           on:clear={() => sim?.clear()}
           on:loadpattern={handleLoadPattern}
+          on:gridsizechange={handleGridSizeChange}
         />
       {/key}
     {/if}
