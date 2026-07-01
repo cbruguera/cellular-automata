@@ -22,6 +22,7 @@
   let speed        = 1
   let gridW        = 300
   let gridH        = 200
+  let colorMode    = 0
 
   // zoom / pan
   let zoom     = 1
@@ -59,6 +60,7 @@
     try {
       running = false
       sim = Simulation.create(JSON.stringify(buildConfig()))
+      if (colorMode !== 0) sim.set_color_mode(colorMode)
     } catch (e) {
       error = e?.message ?? String(e)
     }
@@ -185,6 +187,11 @@
     fitToCanvas()
   }
 
+  function handleColorModeChange(e) {
+    colorMode = e.detail
+    sim?.set_color_mode(colorMode)
+  }
+
   function handleLoadPattern(e) {
     try {
       running = false
@@ -240,6 +247,7 @@
           {neighborhood}
           {gridW}
           {gridH}
+          {colorMode}
           on:rulechange={handleRuleChange}
           on:boundarychange={handleBoundaryChange}
           on:neighborhoodchange={handleNeighborhoodChange}
@@ -248,6 +256,7 @@
           on:clear={() => sim?.clear()}
           on:loadpattern={handleLoadPattern}
           on:gridsizechange={handleGridSizeChange}
+          on:colormodechange={handleColorModeChange}
         />
       {/key}
     {/if}

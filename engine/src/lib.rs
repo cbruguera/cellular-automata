@@ -43,6 +43,8 @@ impl Simulation {
         Ok(())
     }
 
+    pub fn set_color_mode(&mut self, mode: u8) { self.inner.set_color_mode(mode); }
+
     pub fn step(&mut self) { self.inner.step(); }
     pub fn render(&mut self) { self.inner.render_rgba(&mut self.pixel_buf); }
     pub fn randomize(&mut self) { self.inner.randomize(); }

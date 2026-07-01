@@ -39,6 +39,7 @@ pub struct Life {
     neighborhood: Neighborhood,
     generation: u64,
     population: u64,
+    color_mode: u8,
 }
 
 impl Life {
@@ -55,6 +56,7 @@ impl Life {
             neighborhood: config.neighborhood,
             generation: 0,
             population: 0,
+            color_mode: 0,
         };
         life.randomize();
         life
@@ -133,8 +135,12 @@ impl Automaton for Life {
                 let idx_vec: Vec<usize> = (0..shape.len())
                     .map(|i| match i { 0 => x, 1 => y, _ => 0 })
                     .collect();
-                let age = self.ages[IxDyn(&idx_vec)];
-                let (r, g, b) = age_to_color(age);
+                let idx = IxDyn(&idx_vec);
+                let (r, g, b) = if self.color_mode == 1 {
+                    age_to_color(self.ages[idx])
+                } else {
+                    if self.grid.cells[idx] == 1 { (204, 204, 204) } else { (13, 13, 13) }
+                };
                 let base = (y * w + x) * 4;
                 buf[base]     = r;
                 buf[base + 1] = g;
@@ -143,6 +149,8 @@ impl Automaton for Life {
             }
         }
     }
+
+    fn set_color_mode(&mut self, mode: u8) { self.color_mode = mode; }
 
     fn randomize(&mut self) {
         let mut seed_bytes = [0u8; 8];

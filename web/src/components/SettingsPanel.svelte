@@ -9,6 +9,7 @@
   export let neighborhood = 'moore'
   export let gridW        = 200
   export let gridH        = 150
+  export let colorMode    = 0
 
   const dispatch = createEventDispatcher()
   let tab = 'rule'
@@ -138,10 +139,10 @@
     <div class="section">
       <div class="row">
         <label for="colors">Colors</label>
-        <select id="colors" disabled>
-          <option>Classic</option>
-          <option>Neon</option>
-          <option>Heatmap</option>
+        <select id="colors" bind:value={colorMode}
+          on:change={() => dispatch('colormodechange', +colorMode)}>
+          <option value={0}>Classic</option>
+          <option value={1}>Age</option>
         </select>
       </div>
     </div>
