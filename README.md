@@ -2,6 +2,8 @@
 
 A simulation and visualization tool for cellular automata. Built with a Rust/WebAssembly engine and a Svelte frontend.
 
+![CA Explorer screenshot](screenshot.png)
+
 ## Features
 
 - Game of Life with configurable B/S rules, neighborhood type (Moore / Von Neumann), and boundary conditions (toroidal / dead)
